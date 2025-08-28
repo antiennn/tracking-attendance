@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Attend Meeting</title>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+      width: 300px;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #3498db;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .message {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Attend Meeting</h2>
+    <input type="text" id="nameInput" placeholder="Enter your name" />
+    <button onclick="attendMeeting()">Submit</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    let fingerprint = null;
+    let meetingId = "{{ meeting_id }}"
+
+    async function initFingerprint() {
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      fingerprint = result.visitorId;
+    }
+
+    async function attendMeeting() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name) {
+        alert("Please enter your name");
+        return;
+      }
+      console.log(fingerprint)
+      const payload = {
+        name: name,
+        device_id: fingerprint
+      };
+
+      try {
+        const res = await fetch(`/api/attendance/meetings/${meetingId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          document.getElementById("message").innerText = "Attendance recorded successfully!";
+          document.getElementById("message").style.color = "green";
+        } else {
+          const error = await res.json();
+          document.getElementById("message").innerText = `Error: ${error.detail}`;
+          document.getElementById("message").style.color = "red";
+        }
+      } catch (err) {
+        document.getElementById("message").innerText = "Failed to connect to server";
+        document.getElementById("message").style.color = "red";
+      }
+    }
+
+    initFingerprint();
+  </script>
+</body>
+</html>
