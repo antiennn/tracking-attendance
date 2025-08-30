@@ -80,6 +80,6 @@ Here are some helpful resources and references for further information:
 
 ## 📧Contact
 Don't hesitate to contact me if you have any confusion or questions
-<a href="https://anhthenguyen.work@gmail.com" target="blank">
+<a href="mailto:it.mpclub@ou.edu.vn" target="_blank">
   <img align="center" src="https://img.icons8.com/color/48/000000/gmail--v2.png" alt="it.mpclub@ou.edu.vn" height="30" width="40">
 </a>
