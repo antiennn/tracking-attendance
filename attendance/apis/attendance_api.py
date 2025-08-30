@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Form
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
+from sqlalchemy import select, exists, and_, case
 from starlette import status
 
 from attendance.models.attendance_model import Attendance
@@ -34,20 +35,31 @@ async def attend_meeting(meeting_id: str, request: Request, payload: AttendanceS
     if client_ip not in allowed_ips:
         raise HTTPException(status_code=403, detail=f"IP {client_ip} not allowed")
 
-    attend_existed = (
-        db.query(Attendance)
-        .filter_by(meeting_id=meeting_id, name=payload.name)
-        .first()
+    stmt = select(
+        case(
+            (
+                exists().where(
+                    and_(Attendance.meeting_id == meeting_id,
+                         Attendance.name == payload.name)
+                ),
+                "attended"
+            ),
+            (
+                exists().where(
+                    and_(Attendance.meeting_id == meeting_id,
+                         Attendance.device_id == payload.device_id)
+                ),
+                "fraud"
+            ),
+            else_="ok"
+        )
     )
-    if attend_existed:
-        raise HTTPException(status_code=400, detail="Already attended")
 
-    is_cheat = (
-        db.query(Attendance)
-        .filter_by(meeting_id=meeting_id, device_id=payload.device_id)
-        .first()
-    )
-    if is_cheat:
+    result = db.execute(stmt).scalar()
+
+    if result == "attended":
+        raise HTTPException(status_code=400, detail="Already attended")
+    elif result == "fraud":
         raise HTTPException(status_code=400, detail="fraud detected")
 
     new_attendance = Attendance(
