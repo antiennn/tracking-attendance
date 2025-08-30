@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from sqladmin import Admin
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from attendance.apis import attendance_api
 from common.apis import utils_api
@@ -11,8 +13,15 @@ from database import engine
 from internals.admin import AdminAuth
 from internals.models.ip_admin import IPAdmin
 from internals.models.meeting_admin import MeetingAdmin
+from common import get_csrf_config
 
 app = FastAPI()
+
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOST
+)
+
+
 authentication_backend = AdminAuth(secret_key=settings.ADMIN_SECRET_KEY)
 admin = Admin(app, engine, base_url="/admin",
               authentication_backend=authentication_backend,

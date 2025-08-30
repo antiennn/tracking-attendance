@@ -1,6 +1,8 @@
 import os
+from typing import List
 
 from dotenv import load_dotenv
+from pydantic.v1 import validator
 from pydantic_settings import BaseSettings
 
 load_dotenv()
@@ -16,6 +18,9 @@ class Settings(BaseSettings):
     ADMIN_USERNAME_BACKEND: str = os.getenv("ADMIN_USERNAME_BACKEND", "")
     ADMIN_PASSWORD_BACKEND: str = os.getenv("ADMIN_PASSWORD_BACKEND", "")
     ADMIN_SECRET_KEY: str = os.getenv("ADMIN_SECRET_KEY", "")
+
+    ALLOWED_HOST: list[str] = os.getenv("ADMIN_SECRET_KEY", [])
+    CSRF_COOKIES: str = os.getenv("CSRF_COOKIES", "")
 
     class Config:
         env_file: str = "/.env"

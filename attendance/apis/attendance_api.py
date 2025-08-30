@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Form
+from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -12,7 +13,14 @@ router = APIRouter(prefix="/attendance", tags=["Attendance"])
 
 
 @router.post("/meetings/{meeting_id}", status_code=status.HTTP_201_CREATED)
-async def attend_meeting(meeting_id: str, request: Request, payload: AttendanceSchema, db: Session = Depends(get_db)):
+async def attend_meeting(meeting_id: str, request: Request, payload: AttendanceSchema, db: Session = Depends(get_db),
+                         csrf_protect: CsrfProtect = Depends()):
+
+    try:
+        await csrf_protect.validate_csrf(request)
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
     client_ip = get_client_ip(request)
 
     meeting = db.query(Meeting).filter_by(id=meeting_id).first()
