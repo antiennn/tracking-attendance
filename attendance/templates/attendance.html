@@ -68,7 +68,6 @@
         alert("Please enter your name");
         return;
       }
-      console.log(fingerprint)
       const payload = {
         name: name,
         device_id: fingerprint
@@ -78,7 +77,8 @@
         const res = await fetch(`/api/attendance/meetings/${meetingId}`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRF-Token": "{{ csrf_token }}"
           },
           body: JSON.stringify(payload)
         });
