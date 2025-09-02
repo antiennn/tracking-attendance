@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+import io
+import qrcode
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 from sqlalchemy import select, exists, and_, case
@@ -9,6 +11,7 @@ from attendance.models.meeting_model import Meeting
 from attendance.schemas.attendance_schema import AttendanceSchema
 from attendance.utils.get_client_ip import get_client_ip
 from database import get_db
+from config import settings
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
 
@@ -78,3 +81,18 @@ async def attend_meeting(meeting_id: str, request: Request, payload: AttendanceS
         "user_id": payload.name,
         "ip": client_ip,
     }
+
+
+@router.get("/meetings/{meeting_id}/qr")
+async def download_qr(meeting_id: str):
+    img = qrcode.make(f"{settings.DOMAIN}/attendance/meetings/{meeting_id}")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return Response(
+        content=buf.read(),
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f"attachment; filename=meeting-{meeting_id}.png"
+        }
+    )
