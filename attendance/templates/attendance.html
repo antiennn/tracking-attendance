@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Attend Meeting</title>
   <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,7 +13,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
     }
     .container {
       background: #fff;
@@ -38,10 +40,6 @@
     button:hover {
       background: #2980b9;
     }
-    .message {
-      margin-top: 1rem;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -49,12 +47,11 @@
     <h2>Attend Meeting</h2>
     <input type="text" id="nameInput" placeholder="Enter your name" />
     <button onclick="attendMeeting()">Submit</button>
-    <div class="message" id="message"></div>
   </div>
 
   <script>
     let fingerprint = null;
-    let meetingId = "{{ meeting_id }}"
+    let meetingId = "{{ meeting_id }}";
 
     async function initFingerprint() {
       const fp = await FingerprintJS.load();
@@ -65,13 +62,21 @@
     async function attendMeeting() {
       const name = document.getElementById("nameInput").value.trim();
       if (!name) {
-        alert("Please enter your name");
+        Swal.fire("⚠️ Missing name", "Please enter your name", "warning");
         return;
       }
+
       const payload = {
         name: name,
         device_id: fingerprint
       };
+
+      Swal.fire({
+        title: "Submitting...",
+        text: "Please wait while we record your attendance",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
 
       try {
         const res = await fetch(`/api/attendance/meetings/${meetingId}`, {
@@ -84,16 +89,13 @@
         });
 
         if (res.ok) {
-          document.getElementById("message").innerText = "Attendance recorded successfully!";
-          document.getElementById("message").style.color = "green";
+          Swal.fire("✅ Success", "Attendance recorded successfully!", "success");
         } else {
           const error = await res.json();
-          document.getElementById("message").innerText = `Error: ${error.detail}`;
-          document.getElementById("message").style.color = "red";
+          Swal.fire("❌ Error", error.detail || "Something went wrong", "error");
         }
       } catch (err) {
-        document.getElementById("message").innerText = "Failed to connect to server";
-        document.getElementById("message").style.color = "red";
+        Swal.fire("🚨 Failed", "Cannot connect to server", "error");
       }
     }
 

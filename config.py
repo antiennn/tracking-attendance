@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     ALLOWED_HOST: list[str] = os.getenv("ADMIN_SECRET_KEY", [])
     CSRF_COOKIES: str = os.getenv("CSRF_COOKIES", "")
+    DOMAIN: str = os.getenv("DOMAIN", "")
 
     class Config:
         env_file: str = "/.env"

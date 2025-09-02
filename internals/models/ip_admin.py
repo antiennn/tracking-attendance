@@ -4,6 +4,11 @@ from attendance.models.ip_model import IP
 from internals.utils.check_ip_valid import is_valid_ip
 
 
+def validate_ip(form, field):
+    if not is_valid_ip(form.ip_address.data):
+        raise ValidationError(f"IP not valid: {form.ip_address.data}")
+
+
 class IPAdmin(ModelView, model=IP):
     name = "IP"
     page_size_options = [25, 50, 100, 200]
@@ -18,9 +23,10 @@ class IPAdmin(ModelView, model=IP):
         IP.description
     ]
 
-    async def on_model_change(self, data, model, is_created, request):
-        ip_value = data.get("ip_address")
-        if not is_valid_ip(ip_value):
-            raise ValidationError(f"IP not valid: {ip_value}")
+    form_excluded_columns = [IP.meetings]
 
-        return await super().on_model_change(data, model, is_created, request)
+    form_args = {
+        "ip_address": {
+            "validators": [validate_ip]
+        },
+    }
